@@ -13,17 +13,25 @@ if not API_KEY:
      
 client = genai.Client(api_key=API_KEY)
 
-question = input("O que você está pensando ?:  ")
+# O chat guarda o histórico da conversa entre as perguntas
+chat  = client.chats.create(model="gemini-2.5-flash")
 
-try:
-    resposta = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=question
-    )
-
-    print(resposta.text)
-    
-except errors.ServerError as e:
-     print(f"Servidor do Gemini indisponível ({e.code}). Tente novamente mais tarde.")
-except errors.ClientError as e:
-    print(f"Erro na requisição ({e.code}): {e.message}")
+def chamando_agent(question: str) -> str:
+    try:
+        for chunk in chat.send_message_stream(question):
+            print(chunk.text or "", end="", flush=True)
+        print()
+        
+    except errors.ServerError as e:
+        print(f"Servidor do Gemini indisponível ({e.code}). Tente novamente mais tarde.")
+    except errors.ClientError as e:
+        print(f"Erro na requisição ({e.code}): {e.message}")
+        
+if __name__=="__main__":
+    print("SISTEMA COM AGENTE GOOGLE (digite 'sair' para encerrar)")
+    while True:
+        question = input("\nO que você está pensando ?\n")
+        if question.lower() == "sair":
+            break
+        print("Gemini: \n", end="")
+        chamando_agent(question)
